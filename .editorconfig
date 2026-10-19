@@ -1,0 +1,44 @@
+﻿root = true
+
+# 所有文本文件统一行尾
+[*]
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# 代码与文档：UTF-8 with BOM、CRLF（遵循仓库约定）
+[*.{cs,csproj,sln,slnx,props,targets,md}]
+charset = utf-8-bom
+end_of_line = crlf
+indent_size = 4
+
+# JSON / YAML 等现代配置文件：UTF-8 无 BOM、LF
+[*.{json,yml,yaml}]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+
+#### .NET 代码风格 ####
+
+[*.cs]
+# var 偏好：按建议使用，但对内置类型显式
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+# 命名空间与大括号
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = true:silent
+
+# using 排序
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# 可空与现代语法
+csharp_style_prefer_null_check_over_type_check = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_prefer_simple_using_statement = true:suggestion

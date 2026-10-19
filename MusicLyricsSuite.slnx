@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LyricsFetcher/LyricsFetcher.csproj" />
+    <Project Path="src/LrcTagger/LrcTagger.csproj" />
+    <Project Path="src/LyricsSuite/LyricsSuite.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,21 @@
+﻿## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+## Build / tooling
+artifacts/
+publish/
+TestResults/
+
+## Reports
+lyrics-fetch-report.csv
+state/
