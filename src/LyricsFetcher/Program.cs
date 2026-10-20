@@ -87,7 +87,8 @@ internal static class Program
         int foundSynced = 0, foundPlain = 0, notFound = 0, empty = 0, skipped = 0, errors = 0;
 
         using var client = new LrcLibClient();
-        var service = new LyricsFetcherService(client);
+        using var fallback = new LiriQoClient();
+        var service = new LyricsFetcherService(client, fallback);
 
         for (var i = 0; i < audioFiles.Count; i++)
         {

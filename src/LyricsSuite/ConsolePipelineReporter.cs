@@ -108,6 +108,23 @@ internal sealed class ConsolePipelineReporter : IPipelineReporter
         Console.WriteLine($"  嵌入失败：{summary.EmbedFailures}");
         Console.WriteLine();
         Console.WriteLine($"读取标签失败：{summary.MetadataFailures}");
+
+        // 失败清单：精确到"用户选的专辑根下的子路径 + 歌曲名"，方便手动补歌词
+        var failures = summary.Failures.ToList();
+        Console.WriteLine();
+        if (failures.Count == 0)
+        {
+            PrintLine("全部成功", ConsoleColor.Green, "无需人工干预");
+        }
+        else
+        {
+            Console.WriteLine($"========== 需要手动获取的歌曲（{failures.Count}）==========");
+            foreach (var f in failures)
+            {
+                PrintLine("待手动", ConsoleColor.Yellow,
+                    $"{f.RelativePath} | {f.Artist} - {f.Title} | {f.DescribeFailure()}");
+            }
+        }
     }
 
     private static void PrintLine(string label, ConsoleColor color, string message)

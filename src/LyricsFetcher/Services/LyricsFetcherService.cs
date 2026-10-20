@@ -6,14 +6,17 @@ namespace LyricsFetcher.Services;
 /// <summary>
 /// 单首歌曲的"查歌词 → 写 .lrc"业务编排。
 /// 本服务不扫描目录，只处理单个 <see cref="TrackMetadata"/>；批量循环与节流由上层决定。
+/// 主路径走 LRCLIB；若注入了 <see cref="LiriQoClient"/>，LRCLIB 未命中或命中但无文本时会降级到 LiriQo。
 /// </summary>
 public sealed class LyricsFetcherService
 {
     private readonly LrcLibClient _client;
+    private readonly LiriQoClient? _fallback;
 
-    public LyricsFetcherService(LrcLibClient client)
+    public LyricsFetcherService(LrcLibClient client, LiriQoClient? fallback = null)
     {
         _client = client;
+        _fallback = fallback;
     }
 
     /// <param name="track">曲目元数据（含 OutputPath — .lrc 的目标路径）。</param>
@@ -42,6 +45,30 @@ public sealed class LyricsFetcherService
         try
         {
             var result = await _client.FindLyricsAsync(track, onNotice, cancellationToken);
+
+            // LRCLIB 未命中或命中但没有可写文本时，启用 LiriQo 降级
+            if (_fallback is not null && !HasWritableLyrics(result))
+            {
+                onNotice?.Invoke("LRCLIB 未命中，降级到 LiriQo 聚合源");
+                try
+                {
+                    var fallback = await _fallback.FindLyricsAsync(track, onNotice, cancellationToken);
+                    if (HasWritableLyrics(fallback))
+                    {
+                        result = fallback;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // 降级失败不影响主流程：保留 LRCLIB 原始结果（通常为 null → NotFound）
+                    onNotice?.Invoke($"LiriQo 降级查询失败：{ex.Message}");
+                }
+            }
+
             if (result is null)
             {
                 return new FetchOutcome
@@ -115,4 +142,13 @@ public sealed class LyricsFetcherService
 
     private static string NormalizeNewlines(string value) =>
         value.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\n", Environment.NewLine);
+
+    /// <summary>是否存在"值得写入 .lrc 的内容"：Instrumental 占位算有，纯 null/空字符串算无。</summary>
+    private static bool HasWritableLyrics(LyricsResult? result)
+    {
+        if (result is null) return false;
+        if (result.Instrumental) return true;
+        return !string.IsNullOrWhiteSpace(result.SyncedLyrics) ||
+               !string.IsNullOrWhiteSpace(result.PlainLyrics);
+    }
 }

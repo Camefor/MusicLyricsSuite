@@ -68,9 +68,14 @@ internal static class Program
         };
 
         using var client = new LrcLibClient();
-        var fetcher = new LyricsFetcherService(client);
+        using var fallback = new LiriQoClient();
+        var fetcher = new LyricsFetcherService(client, fallback);
         var pipeline = new AlbumPipeline(fetcher, pipelineOptions);
-        var reporter = new ConsolePipelineReporter();
+
+        // 日志落在用户选的专辑目录里，文件名带时间戳避免覆盖历史运行
+        var logPath = Path.Combine(fullPath, $"lyrics-suite-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        using var fileReporter = new FileLogPipelineReporter(logPath);
+        var reporter = new CompositePipelineReporter(new ConsolePipelineReporter(), fileReporter);
 
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
@@ -87,10 +92,13 @@ internal static class Program
         catch (OperationCanceledException)
         {
             Console.WriteLine();
-            Console.WriteLine("已取消。");
+            Console.WriteLine("已取消（日志保留至已处理部分）。");
+            Console.WriteLine($"日志：{logPath}");
             return ExitUsageError;
         }
 
+        Console.WriteLine();
+        Console.WriteLine($"日志：{logPath}");
         return ExitOk;
     }
 
